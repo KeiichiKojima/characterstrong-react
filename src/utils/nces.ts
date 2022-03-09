@@ -1,5 +1,6 @@
 export interface NCESSchoolFeatureAttributes {
     NCESSCH?: string,
+    FID: number,
     LEAID?: string,
     NAME?: string,
     OPSTFIPS?: string,
