@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import {
     Button,
     Center,
@@ -15,7 +15,9 @@ import {
     HStack,
     VStack,
     InputRightAddon,
+    Box,
 } from "@chakra-ui/react"
+import { InputActionMeta, Select, SingleValue } from 'chakra-react-select'
 import { Card } from '@components/design/Card'
 import { searchSchoolDistricts, searchSchools, NCESDistrictFeatureAttributes, NCESSchoolFeatureAttributes } from "@utils/nces"
 
@@ -24,6 +26,33 @@ const Home: React.FC = () => {
     const [searching, setSearching] = React.useState(false)
     const [districtSearch, setDistrictSearch] = React.useState<NCESDistrictFeatureAttributes[]>([]);
     const [schoolSearch, setSchoolSearch] = React.useState<NCESSchoolFeatureAttributes[]>([]);
+
+    const [searchingDistrict, setSearchingDistrict] = useState<boolean>(false)
+
+    const [districtKeyword, setDistrictKeyword] = useState<string>("")
+    const [schoolKeyword, setSchoolKeyword] = useState<string>("")
+
+    const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null)
+    const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
+
+    const [districtSelectValue, setDistrictSelectValue] = useState<{
+        value: string;
+        label: string;
+    } | null>();
+    const [schoolSelectValue, setSchoolSelectValue] = useState<{
+        value: string;
+        label: string;
+    } | null>();
+
+    const districtOptions = useMemo(() => districtSearch.map(district => ({
+        value: district.LEAID,
+        label: district.NAME,
+    })), [districtSearch])
+
+    const schoolOptions = useMemo(() => schoolSearch.map(school => ({
+        value: school.FID.toString(),
+        label: school.NAME!,
+    })), [schoolSearch])
     
     const demo = async () => { // see console for api result examples
         setSearching(true)
@@ -37,31 +66,99 @@ const Home: React.FC = () => {
         setSearching(false)
     }
 
+    const fetchDistricts = async () => {
+        if (districtKeyword) {
+            setSearchingDistrict(true)
+            const newDistrictSearch = await searchSchoolDistricts(districtKeyword)
+
+            setSearchingDistrict(false)
+        
+            setDistrictSearch(newDistrictSearch.slice(0, 100))
+        }
+    }
+
+    const fetchSchools = async () => {
+        if (selectedDistrictId) {
+            const newSchoolSearch = await searchSchools(schoolKeyword, selectedDistrictId)
+            
+            setSchoolSearch(newSchoolSearch.slice(0, 100))
+        }
+    }
+
+    // useEffect(() => {
+    //     demo()
+    // }, [])
+
     useEffect(() => {
-        demo()
-    }, [])
+        fetchDistricts()
+    }, [districtKeyword])
+
+    useEffect(() => {
+        fetchSchools()
+    }, [selectedDistrictId, schoolKeyword])
+
+    const handleChangeDistrict = (newValue: SingleValue<{
+        value: string;
+        label: string;
+    }>) => {
+        if (!!newValue) {
+            setDistrictSelectValue(newValue)
+            setSelectedDistrictId(newValue.value)
+
+            if (newValue.value !== selectedDistrictId) {
+                setSelectedSchoolId(null)
+                setSchoolSelectValue(null)
+                setSchoolKeyword("")
+            }
+        }
+    };
+
+    const handleInputChangeDistrict = (newValue: string, actionMeta: InputActionMeta) => {
+        if (actionMeta.action !== 'input-blur') {
+            setDistrictKeyword(newValue)
+        }
+    }
+
+    const handleChangeSchool = (newValue: SingleValue<{
+        value: string;
+        label: string;
+    }>) => {
+        if (!!newValue) {
+            setSchoolSelectValue(newValue)
+            setSelectedSchoolId(newValue.value)
+        }
+    }
     
     return (
         <Center padding="100px" height="90vh">
             <ScaleFade initialScale={0.9} in={true}>
                 <Card variant="rounded" borderColor="blue">
                     <Heading>School Data Finder</Heading>
-                    <Text>
-                        How would you utilize React.useEffect with the searchSchoolDistricts and searchSchools functions? <br />
-                        Using <a href="https://chakra-ui.com/docs/principles" target="_blank">Chakra-UI</a> or your favorite UI toolkit, build an interface that allows the user to: <br />
-                        <OrderedList>
-                            <ListItem>Search for a district</ListItem>
-                            <ListItem>Search for a school within the district (or bypass district filter)</ListItem>
-                            <ListItem>View all returned data in an organized way</ListItem>
-                        </OrderedList>
-                    </Text>
-                    <Divider margin={4} />
-                    <Text>
-                        Check the console for example of returned data. <b>Happy coding!</b>< br />
-                        {searching ? <Spinner /> : <></>}< br />
-                        {districtSearch.length} Demo Districts<br />
-                        {schoolSearch.length} Demo Schools<br />
-                    </Text>
+                    <Box width={'100%'}>
+                        <Box>
+                            <Select
+                                name="districts"
+                                options={districtOptions}
+                                placeholder="Search districts"
+                                closeMenuOnSelect={true}
+                                value={districtSelectValue}
+                                onChange={handleChangeDistrict}
+                                onInputChange={handleInputChangeDistrict}
+                                size="sm"
+                            />
+                        </Box>
+                        <Box mt={'2'}>
+                            <Select
+                                name="schools"
+                                options={schoolOptions}
+                                placeholder="Search schools"
+                                closeMenuOnSelect={true}
+                                value={schoolSelectValue}
+                                onChange={handleChangeSchool}
+                                size="sm"
+                            />
+                        </Box>
+                    </Box>
                 </Card>
             </ScaleFade>
         </Center>
