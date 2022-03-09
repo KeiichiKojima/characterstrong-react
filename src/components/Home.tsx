@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
     Button,
     Center,
@@ -43,6 +43,8 @@ const Home: React.FC = () => {
         value: string;
         label: string;
     } | null>();
+
+    const timeoutId = useRef<NodeJS.Timeout>()
 
     const districtOptions = useMemo(() => districtSearch.map(district => ({
         value: district.LEAID,
@@ -90,11 +92,23 @@ const Home: React.FC = () => {
     // }, [])
 
     useEffect(() => {
-        fetchDistricts()
+        if (typeof timeoutId.current !== 'undefined') {
+            clearTimeout(timeoutId.current)
+        }
+
+        timeoutId.current = setTimeout(() => {
+            fetchDistricts()
+        }, 500)
     }, [districtKeyword])
 
     useEffect(() => {
-        fetchSchools()
+        if (typeof timeoutId.current !== 'undefined') {
+            clearTimeout(timeoutId.current)
+        }
+
+        timeoutId.current = setTimeout(() => {
+            fetchSchools()
+        }, 500)
     }, [selectedDistrictId, schoolKeyword])
 
     const handleChangeDistrict = (newValue: SingleValue<{
@@ -128,6 +142,12 @@ const Home: React.FC = () => {
             setSelectedSchoolId(newValue.value)
         }
     }
+
+    const handleInputChangeSchool = (newValue: string, actionMeta: InputActionMeta) => {
+        if (actionMeta.action !== 'input-blur') {
+            setSchoolKeyword(newValue);
+        }
+    }
     
     return (
         <Center padding="100px" height="90vh">
@@ -155,6 +175,7 @@ const Home: React.FC = () => {
                                 closeMenuOnSelect={true}
                                 value={schoolSelectValue}
                                 onChange={handleChangeSchool}
+                                onInputChange={handleInputChangeSchool}
                                 size="sm"
                             />
                         </Box>
