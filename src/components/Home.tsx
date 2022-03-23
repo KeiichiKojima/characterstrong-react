@@ -1,20 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
-    Button,
     Center,
     Heading,
-    Text,
-    Icon,
-    Input,
     ScaleFade,
-    OrderedList,
-    Divider,
-    ListItem,
-    Spinner,
-    InputGroup, // Some Chakra components that might be usefull
-    HStack,
-    VStack,
-    InputRightAddon,
     Box,
 } from "@chakra-ui/react"
 import { InputActionMeta, Select, SingleValue } from 'chakra-react-select'
@@ -23,26 +11,22 @@ import { searchSchoolDistricts, searchSchools, NCESDistrictFeatureAttributes, NC
 
 
 const Home: React.FC = () => {
-    const [searching, setSearching] = React.useState(false)
-    const [districtSearch, setDistrictSearch] = React.useState<NCESDistrictFeatureAttributes[]>([]);
-    const [schoolSearch, setSchoolSearch] = React.useState<NCESSchoolFeatureAttributes[]>([]);
-
-    const [searchingDistrict, setSearchingDistrict] = useState<boolean>(false)
+    const [districtSearch, setDistrictSearch] = React.useState<NCESDistrictFeatureAttributes[]>([])
+    const [schoolSearch, setSchoolSearch] = React.useState<NCESSchoolFeatureAttributes[]>([])
 
     const [districtKeyword, setDistrictKeyword] = useState<string>("")
     const [schoolKeyword, setSchoolKeyword] = useState<string>("")
 
     const [selectedDistrictId, setSelectedDistrictId] = useState<string | null>(null)
-    const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null)
 
     const [districtSelectValue, setDistrictSelectValue] = useState<{
         value: string;
         label: string;
-    } | null>();
+    } | null>()
     const [schoolSelectValue, setSchoolSelectValue] = useState<{
         value: string;
         label: string;
-    } | null>();
+    } | null>()
 
     const timeoutId = useRef<NodeJS.Timeout>()
 
@@ -55,25 +39,10 @@ const Home: React.FC = () => {
         value: school.FID.toString(),
         label: school.NAME!,
     })), [schoolSearch])
-    
-    const demo = async () => { // see console for api result examples
-        setSearching(true)
-        const demoDistrictSearch = await searchSchoolDistricts("Peninsula School District")
-        setDistrictSearch(demoDistrictSearch)
-        console.log("District example", demoDistrictSearch)
-
-        const demoSchoolSearch = await searchSchools("k", demoDistrictSearch[1].LEAID)
-        setSchoolSearch(demoSchoolSearch)
-        console.log("School Example", demoSchoolSearch)
-        setSearching(false)
-    }
 
     const fetchDistricts = async () => {
         if (districtKeyword) {
-            setSearchingDistrict(true)
             const newDistrictSearch = await searchSchoolDistricts(districtKeyword)
-
-            setSearchingDistrict(false)
         
             setDistrictSearch(newDistrictSearch.slice(0, 100))
         }
@@ -86,10 +55,6 @@ const Home: React.FC = () => {
             setSchoolSearch(newSchoolSearch.slice(0, 100))
         }
     }
-
-    // useEffect(() => {
-    //     demo()
-    // }, [])
 
     useEffect(() => {
         if (typeof timeoutId.current !== 'undefined') {
@@ -120,12 +85,11 @@ const Home: React.FC = () => {
             setSelectedDistrictId(newValue.value)
 
             if (newValue.value !== selectedDistrictId) {
-                setSelectedSchoolId(null)
                 setSchoolSelectValue(null)
                 setSchoolKeyword("")
             }
         }
-    };
+    }
 
     const handleInputChangeDistrict = (newValue: string, actionMeta: InputActionMeta) => {
         if (actionMeta.action !== 'input-blur') {
@@ -139,13 +103,12 @@ const Home: React.FC = () => {
     }>) => {
         if (!!newValue) {
             setSchoolSelectValue(newValue)
-            setSelectedSchoolId(newValue.value)
         }
     }
 
     const handleInputChangeSchool = (newValue: string, actionMeta: InputActionMeta) => {
         if (actionMeta.action !== 'input-blur') {
-            setSchoolKeyword(newValue);
+            setSchoolKeyword(newValue)
         }
     }
     
@@ -183,7 +146,7 @@ const Home: React.FC = () => {
                 </Card>
             </ScaleFade>
         </Center>
-    );
-};
+    )
+}
 
 export default Home
